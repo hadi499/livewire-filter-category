@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Post extends Model
@@ -31,5 +32,20 @@ class Post extends Model
     public function getExcerpt()
     {
         return Str::limit(strip_tags($this->body), 25);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($post) {
+            Storage::delete($post->image);
+        });
+
+        static::updating(function ($post) {
+            if ($post->isDirty('image') && ($post->getOriginal('image') !== null)) {
+                Storage::delete($post->getOriginal('image'));
+            }
+        });
     }
 }

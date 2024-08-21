@@ -12,7 +12,8 @@ class PostEdit extends Component
 {
     use WithFileUploads;
 
-    public $post;
+
+    public $postId;
     public $title;
     public $slug;
     public $image;
@@ -21,22 +22,17 @@ class PostEdit extends Component
     public $selectedCategories = [];
     public $existingImage;
 
-    protected $rules = [
-        'title' => 'required|max:255',
-        'slug' => 'required|unique:posts,slug,{{postId}}',
-        'image' => 'image|file|max:1024|nullable',
-        'body' => 'required',
-        'selectedCategories' => 'required|array',
-    ];
+
 
     public function mount($slug)
     {
-        $this->post = Post::where('slug', $slug)->firstOrFail();
-        $this->title = $this->post->title;
-        $this->slug = $this->post->slug;
-        $this->body = $this->post->body;
-        $this->selectedCategories = $this->post->categories->pluck('id')->toArray();
-        $this->existingImage = $this->post->image;
+        $post = Post::where('slug', $slug)->firstOrFail();
+        $this->postId = $post->id;
+        $this->title = $post->title;
+        $this->slug = $post->slug;
+        $this->body = $post->body;
+        $this->selectedCategories = $post->categories->pluck('id')->toArray();
+        $this->existingImage = $post->image;
     }
 
     public function updatedTitle($value)
@@ -52,13 +48,13 @@ class PostEdit extends Component
     public function update()
     {
         $validatedData = $this->validate([
-            'title' => 'required|max:255|unique:posts',
+            'title' => 'required|unique:posts,title,' . $this->postId,
             'image' => 'image|file|max:1024|nullable',
             'body' => 'required',
             'selectedCategories' => 'required|array',
         ]);
 
-
+        $post = Post::findOrFail($this->postId);
 
         if ($this->image) {
             $validatedData['image'] = $this->image->store('posts');
@@ -69,10 +65,10 @@ class PostEdit extends Component
         $validatedData['user_id'] = auth()->user()->id;
         unset($validatedData['selectedCategories']);
 
-        $this->post->update($validatedData);
+        $post->update($validatedData);
 
         // Update categories
-        $this->post->categories()->sync($this->selectedCategories);
+        $post->categories()->sync($this->selectedCategories);
 
         session()->flash('success', 'Post updated successfully!');
         return redirect()->route('dashboard');
