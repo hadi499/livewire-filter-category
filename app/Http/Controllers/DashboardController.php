@@ -12,6 +12,15 @@ class DashboardController extends Controller
         return view('dashboard.index');
     }
 
+    public function show(Post $post)
+    {
+        return view(
+            'dashboard.show',
+            [
+                'slug' => $post->slug
+            ]
+        );
+    }
 
     public function create()
     {
