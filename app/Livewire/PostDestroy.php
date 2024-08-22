@@ -10,8 +10,6 @@ class PostDestroy extends Component
 {
     public $post;
 
-    public $delete;
-
     public function mount(Post $post)
     {
         $this->post = $post;
@@ -24,6 +22,7 @@ class PostDestroy extends Component
         //     Storage::delete($this->post->image);
         // }
         $this->post->delete();
+        $this->confirmingDelete = false;
         return redirect()->route('dashboard');
     }
 
